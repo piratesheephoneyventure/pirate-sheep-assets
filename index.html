@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pirate Sheep • Kalkulator ponude (Compact v2)</title>
+<style>
+  :root{
+    --bg:#0b0b0c;
+    --card:#141418cc;
+    --ink:#f2f2f2;
+    --muted:#b1b6bd;
+    --accent:#ffd166;
+    --accent-2:#fca311;
+    --ok:#10b981;
+    --mid:#f59e0b;
+    --hi:#f9a8d4;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background: url('https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/background_sky.jpg') center/cover no-repeat fixed, var(--bg);
+    color:var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    line-height:1.45;
+    padding: 12px;
+  }
+  .wrap{ max-width: 1120px; margin: 0 auto;}
+  header{ display:flex; align-items:center; gap:10px; margin-bottom: 10px;}
+  .brand img{ width:44px; height:44px; border-radius:10px; background:#111; border:1px solid #222; object-fit:cover;}
+  h1{ font-size: clamp(18px, 3vw, 26px); margin:0;}
+  .sub{ color: var(--muted); font-size:12.5px;}
+  .links{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; border:1px solid #2a2a32; background:#2a2a33d9; font-size:11px; color:#fff; text-decoration:none; }
+  .chip:hover{ border-color:#3a3a45; }
+
+  /* Responsive two-column grid that never lets left overlap */
+  .grid{
+    display:grid;
+    grid-template-columns: minmax(340px, 1fr) minmax(320px, 1fr);
+    gap:12px;
+    align-items:start;
+  }
+  @media(max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
+
+  .card{
+    background: linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.30)), var(--card);
+    border: 1px solid #232329;
+    border-radius: 14px;
+    padding: 12px;
+  }
+  label{ font-weight:800; margin:6px 0; display:block;}
+  select, input[type="number"], input[type="text"], input[type="email"], textarea{
+    width:100%; background:#0f0f13; color:var(--ink); border:2px solid #27272f;
+    border-radius: 10px; padding:8px 10px; outline:none; font-size:14px;
+  }
+  textarea{ min-height: 72px;}
+  .muted{ color: var(--muted); font-size: 12px;}
+  .divider{ height:1px; background:#232329; margin:10px 0;}
+  .price{ font-size: clamp(22px, 2.4vw, 28px); font-weight:900; letter-spacing:0.2px;}
+  .badge{ display:inline-block; font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px; background:linear-gradient(180deg,var(--accent),var(--accent-2)); color:#1a1200; margin-bottom:4px; }
+
+  /* Single 16:9 preview image (swaps per tier) */
+  .hero{
+    width:100%; aspect-ratio:16/9; border-radius:12px; border:2px solid #232329;
+    background:#1a1a20 center/cover no-repeat;
+    display:flex; align-items:center; justify-content:center; color:#fff8; font-weight:800;
+    margin-bottom:8px; position:relative; overflow:hidden;
+    cursor: zoom-in;
+  }
+  .hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  /* Tiles */
+  .tiles{ display:grid; gap:8px; }
+  @media(min-width: 560px){ .tiles{ grid-template-columns: repeat(4, 1fr);} }
+  .tiles.paketi{ grid-template-columns: repeat(3, minmax(150px,1fr)); }
+  .tiles.meads { grid-template-columns: repeat(4, minmax(110px,1fr)); }
+  .tile{ border:2px solid #27272f; border-radius:10px; overflow:hidden; cursor:pointer; background:#0f0f13; transition:transform .06s ease;}
+  .tile:active{ transform: translateY(1px); }
+  .tile .ph{
+    position:relative;
+    width:100%; aspect-ratio: 4/3; display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(45deg,rgba(255,255,255,.06),rgba(0,0,0,.06));
+  }
+  .tiles.meads .tile .ph{ aspect-ratio: 1/1; }
+  .tile .ph img{ width:80%; height:80%; object-fit:contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+  .tile.active{ box-shadow: 0 0 0 3px var(--accent) inset; }
+  .tile .meta{ padding:6px; text-align:center; }
+  .tile .name{ font-weight:800; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tile .price-e{ font-weight:800; font-size:12px; color:#fff; opacity:.95; margin-top:2px; }
+
+  /* Tooltip */
+  .tip{ position:absolute; z-index:50; background:#101014; border:1px solid #2a2a32; color:#e8e8ea; padding:8px 10px; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,.35); width:320px; max-width:90vw; pointer-events:none; display:none; }
+  .tip h4{ margin:0 0 6px; font-size:13px; }
+  .tip .small{ color:#9aa0a6; font-size:12px; }
+
+  .kpis{ display:grid; grid-template-columns: repeat(3,1fr); gap:8px; margin-top:6px;}
+  .kpi{ background:#111118; border:1px solid #27272f; padding:8px 10px; border-radius: 10px; }
+  .kpi .t{ font-size:11px; color:var(--muted);}
+  .kpi .v{ font-size:16px; font-weight:800;}
+  .kpi.bad .v{ color: var(--hi); }
+  .kpi.mid .v{ color: var(--mid); }
+  .kpi.good .v{ color: var(--ok); }
+
+  .btn{ padding: 10px 12px; border-radius: 10px; border:1px solid #30303a; background:linear-gradient(180deg,#3a3a46,#24242e);
+    color: var(--ink); cursor:pointer; font-weight:900; letter-spacing:0.1px; font-size:14px;}
+  .btn.primary{ background: linear-gradient(180deg, var(--accent),var(--accent-2)); color:#1a1200; border:none;}
+  .btn:active{ transform: translateY(1px); }
+
+  .notice{ background:#101014; border-left: 4px solid var(--accent); padding:8px 10px; border-radius: 8px; margin-top: 8px; color: var(--muted); white-space:pre-wrap; }
+
+  footer{ color:#7a7f87; font-size:11px; text-align:center; margin-top:10px;}
+  footer .links{ justify-content:center; }
+
+  /* Količina input istakni */
+  #qty{ font-size:18px; font-weight:800; border-color: var(--accent); background:#1a1a20; }
+
+  /* Bottom small gallery */
+  .gallery{ margin-top:12px; }
+  .gstrip{ display:flex; gap:10px; overflow-x:auto; padding:8px 2px; }
+  .thumb{ flex: 0 0 auto; width:180px; aspect-ratio:1/1; border-radius:10px; border:1px solid #2a2a32; overflow:hidden; cursor:pointer; }
+  .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  /* Lightbox */
+  .lightbox{ position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; align-items:center; justify-content:center; z-index:9999;}
+  .lightbox img{ max-width:94vw; max-height:94vh; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+  .lightbox.closeable{ cursor: zoom-out; }
+
+  /* Print to A4 — samo tekst */
+  @media print{
+    @page{ size: A4 portrait; margin: 12mm; }
+    body{ background:#fff; color:#111; padding:0; }
+    .card, .gallery{ box-shadow:none; background:#fff; border:none; }
+    img, .tile, .btn, .gallery, .thumb, .gstrip, .hero { display:none !important; }
+    .notice{ border-left: none; color:#111; background:#fff; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="brand">
+      <img src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/ram.svg" alt="logo" id="logoSlot" referrerpolicy="no-referrer">
+      <div>
+        <h1>Pirate Sheep • Kalkulator ponude</h1>
+        <div class="sub">Odaberite paket, medovinu i dodatke. Upišite količinu i cijene se ažuriraju odmah.</div>
+        <div class="links">
+          <a class="chip" href="https://www.piratesheep.store/" target="_blank" rel="noopener">🌐 Web trgovina</a>
+          <a class="chip" href="https://www.instagram.com/piratesheep_honeyventure/?hl=en" target="_blank" rel="noopener">📸 Instagram</a>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <!-- Single 16:9 preview -->
+        <div class="hero" id="hero" title="Klik za uvećanje">
+          <img id="heroImg" referrerpolicy="no-referrer" alt="Pregled" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/preview_kula.jpg">
+        </div>
+
+        <label>Odaberite poklon paket</label>
+        <div class="tiles paketi" id="paketiTiles">
+          <div class="tile active" data-tier="kula" data-tip="kula">
+            <div class="ph">
+              <img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/kula_icon.jpeg" alt="Kula">
+            </div>
+            <div class="meta"><div class="name">Kula</div></div>
+          </div>
+          <div class="tile" data-tier="mini" data-tip="mini">
+            <div class="ph">
+              <img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/mini_icon.jpeg" alt="Jarak">
+            </div>
+            <div class="meta"><div class="name">Jarak</div></div>
+          </div>
+          <div class="tile" data-tier="dragon" data-tip="dragon">
+            <div class="ph">
+              <img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/dragon_icon.jpeg" alt="Zmaj">
+            </div>
+            <div class="meta"><div class="name">Zmaj</div></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div id="chooseMeadKula">
+          <label>Biraj medovinu</label>
+          <div class="tiles meads" id="meadTiles">
+            <div class="tile active" data-mead="traditional" data-tip-mead="traditional">
+              <div class="ph">
+                <img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/traditional_icon.jpeg" alt="Tradicionalna">
+              </div>
+              <div class="meta">
+                <div class="name">Tradicionalna</div>
+                <div class="price-e" id="price_traditional">€0.00 (bez PDV)</div>
+              </div>
+            </div>
+            <div class="tile" data-mead="great" data-tip-mead="great">
+              <div class="ph">
+                <img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/great_icon.jpeg" alt="Great Mead">
+              </div>
+              <div class="meta">
+                <div class="name">Great Mead</div>
+                <div class="price-e" id="price_great">€0.00 (bez PDV)</div>
+              </div>
+            </div>
+            <div class="tile" data-mead="blacktea" data-tip-mead="blacktea">
+              <div class="ph">
+                <img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/blacktea_icon.jpeg" alt="Crni čaj">
+              </div>
+              <div class="meta">
+                <div class="name">Crni čaj</div>
+                <div class="price-e" id="price_blacktea">€0.00 (bez PDV)</div>
+              </div>
+            </div>
+            <div class="tile" data-mead="ribiz" data-tip-mead="ribiz">
+              <div class="ph">
+                <img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/ribiz_icon.jpeg" alt="Crni ribiz">
+              </div>
+              <div class="meta">
+                <div class="name">Crni ribiz</div>
+                <div class="price-e" id="price_ribiz">€0.00 (bez PDV)</div>
+              </div>
+            </div>
+          </div>
+          <div class="muted" id="note_kula">Kula cijena = cijena medovine + €3 kutija.</div>
+        </div>
+
+        <div id="chooseMeadMini" style="display:none">
+          <label>Biraj medovinu</label>
+          <div class="tiles meads">
+            <div class="tile active" data-tip-mead="mini">
+              <div class="ph"><img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/mini_icon.jpeg" alt="Jarak"></div>
+              <div class="meta"><div class="name" id="label_mini">4×0.2L mix</div><div class="price-e" id="price_mini">€0.00 (bez PDV)</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="chooseMeadDragon" style="display:none">
+          <label>Biraj medovinu</label>
+          <div class="muted" id="note_dragon">Odaberite 4 boce (0.75L). Drvena kutija uključena u osnovnu cijenu.</div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:6px;">
+            <select id="d1">
+              <option value="traditional">Tradicionalna</option>
+              <option value="great">Great Mead</option>
+              <option value="blacktea">Crni čaj</option>
+              <option value="ribiz">Crni ribiz</option>
+            </select>
+            <select id="d2">
+              <option value="traditional">Tradicionalna</option>
+              <option value="great">Great Mead</option>
+              <option value="blacktea">Crni čaj</option>
+              <option value="ribiz">Crni ribiz</option>
+            </select>
+            <select id="d3">
+              <option value="traditional">Tradicionalna</option>
+              <option value="great">Great Mead</option>
+              <option value="blacktea">Crni čaj</option>
+              <option value="ribiz">Crni ribiz</option>
+            </select>
+            <select id="d4">
+              <option value="traditional">Tradicionalna</option>
+              <option value="great">Great Mead</option>
+              <option value="blacktea">Crni čaj</option>
+              <option value="ribiz">Crni ribiz</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <label>Dodaci</label>
+        <div class="tiles" id="addons" style="grid-template-columns: repeat(4, minmax(110px,1fr));">
+          <div class="tile" data-add="message" data-price="6" data-tip-addon="message">
+            <div class="ph" style="background:linear-gradient(45deg,#c7d2fe80,#6366f180); color:#fff; font-size:22px;">🧾</div>
+            <div class="meta"><div class="name">Poruka u boci</div></div>
+          </div>
+          <div class="tile" data-add="baglogo" data-price="3" data-tip-addon="baglogo">
+            <div class="ph" style="background:linear-gradient(45deg,#fda4af80,#e11d4880); color:#fff; font-size:22px;">👜</div>
+            <div class="meta"><div class="name">Logo na vrećici</div></div>
+          </div>
+          <div class="tile active" data-add="ribbon_black" data-price="0">
+            <div class="ph" style="background:#1a1a1a; color:#fff; font-size:22px;">🎀</div>
+            <div class="meta"><div class="name">Crna vrpca</div></div>
+          </div>
+          <div class="tile" data-add="ribbon_white" data-price="0">
+            <div class="ph" style="background:#f2f2f2; color:#111; font-size:22px;">🎀</div>
+            <div class="meta"><div class="name">Bijela vrpca</div></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <label>🧾 Tekst poruke u boci</label>
+        <select id="messagePreset">
+          <option value="For valiant deeds and quests well done, may your cup never run dry.">For valiant deeds and quests well done, may your cup never run dry.</option>
+          <option value="Hrvatska je Medovina, drevno piće koje otvara portal u medena mora.">Hrvatska je Medovina, drevno piće koje otvara portal u medena mora.</option>
+          <option value="custom">Vlastiti tekst (100 znakova max)</option>
+        </select>
+        <div class="muted" style="margin:6px 0 4px;">Za vlastiti tekst možemo se naknadno dogovoriti.</div>
+        <textarea id="customMsg" placeholder="Upišite vlastiti tekst (100 znakova max)" maxlength="100" style="display:none"></textarea>
+
+        <div class="divider"></div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+          <div>
+            <label>Količina kutija</label>
+            <input id="qty" type="number" min="1" value="50" />
+            <div class="muted">Popusti: 5% na 50 • 10% na 100 • 20% na 250.</div>
+          </div>
+          <div>
+            <label>Kontakt</label>
+            <input id="company" type="text" placeholder="Naziv tvrtke" />
+            <input id="contact" type="text" placeholder="Kontakt osoba" style="margin-top:6px" />
+            <input id="email" type="email" placeholder="Email" style="margin-top:6px" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="badge">Ukupno s PDV-om</div>
+        <div class="price" id="grand">€0.00</div>
+        <div class="kpis">
+          <div class="kpi"><div class="t">Po kutiji s PDV</div><div class="v" id="perBoxInc">€0.00</div></div>
+          <div class="kpi"><div class="t">Po kutiji bez PDV</div><div class="v" id="perBoxExc">€0.00</div></div>
+          <div class="kpi" id="discBox"><div class="t">Ušteda</div><div class="v" id="disc">€0.00</div></div>
+        </div>
+        <div class="divider"></div>
+        <div class="kpis">
+          <div class="kpi"><div class="t">Ukupno s PDV</div><div class="v" id="totalInc">€0.00</div></div>
+          <div class="kpi"><div class="t">Ukupno bez PDV</div><div class="v" id="totalExc">€0.00</div></div>
+          <div class="kpi" id="qtyBox"><div class="t">Kutije</div><div class="v" id="boxes">0</div></div>
+        </div>
+        <div class="divider"></div>
+        <pre class="notice" id="summary"></pre>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+          <button class="btn primary" id="printBtn">Ispis / PDF</button>
+          <button class="btn" id="copyBtn">Kopiraj ponudu</button>
+          <button class="btn" id="sendBtn">Pošalji upit na info@piratesheep.store</button>
+        </div>
+
+        <!-- Small gallery at bottom -->
+        <div class="gallery">
+          <label>Galerija</label>
+          <div class="gstrip" id="gstrip">
+            <div class="thumb"><img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/preview_kula.jpg" alt=""></div>
+            <div class="thumb"><img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/Galerija_tradicionalna.jpg" alt=""></div>
+            <div class="thumb"><img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/Galerija_crni_caj.jpg" alt=""></div>
+            <div class="thumb"><img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/Galerija_great.jpg" alt=""></div>
+            <div class="thumb"><img referrerpolicy="no-referrer" src="https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/Galerija_ribiz.jpg" alt=""></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      © <span id="year"></span> Pirate Sheep • honey venture
+      <div class="links" style="margin-top:6px;">
+        <a class="chip" href="https://www.piratesheep.store/" target="_blank" rel="noopener">🌐 Web trgovina</a>
+        <a class="chip" href="https://www.instagram.com/piratesheep_honeyventure/?hl=en" target="_blank" rel="noopener">📸 Instagram</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Tooltip + Lightbox -->
+  <div class="tip" id="tip"></div>
+  <div class="lightbox" id="lightbox"><img id="lightimg" alt=""></div>
+
+<script>
+  const MEADS = { traditional:20, great:25, blacktea:32, ribiz:30 };
+  const VAT = 0.25;
+  const CURRENCY = "€";
+  const HERO_BY_TIER = {
+    kula:   "https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/preview_kula.jpg",
+    mini:   "https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/preview_mini.jpg",
+    dragon: "https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/preview_dragon.jpg"
+  };
+
+  /* Lightbox */
+  const lb = document.getElementById('lightbox');
+  const lbimg = document.getElementById('lightimg');
+  function openLB(src){ lbimg.src = src; lb.style.display='flex'; lb.classList.add('closeable'); }
+  lb.addEventListener('click', ()=>{ lb.style.display='none'; lbimg.src=''; });
+
+  /* Single hero preview swap by tier */
+  const hero = document.getElementById('hero');
+  const heroImg = document.getElementById('heroImg');
+  hero.addEventListener('click', ()=> openLB(heroImg.src));
+
+  /* Tooltip helpers */
+  const tip = document.getElementById('tip');
+  function showTip(e, html){ tip.innerHTML = html; tip.style.display='block'; moveTip(e); }
+  function moveTip(e){ tip.style.left = (e.pageX + 12) + 'px'; tip.style.top  = (e.pageY + 12) + 'px'; }
+  function hideTip(){ tip.style.display='none'; }
+
+  function exc(v){ return v/(1+VAT); }
+  function fmt(n){ return CURRENCY + n.toFixed(2); }
+
+  function tipHTML(kind){
+    if(kind==='kula'){
+      const min = exc(Math.min(...Object.values(MEADS)) + 3);
+      const max = exc(Math.max(...Object.values(MEADS)) + 3);
+      return `<h4>Kula • početna cijena (bez PDV)</h4>
+      <div class="small">Paket uključuje: 1 × 0.75L crna keramička boca + poklon kutija s vrpcom</div>
+      <div style="margin-top:6px">Cijena: ${fmt(min)} – ${fmt(max)} (bez PDV)</div>
+      <div class="small" style="margin-top:6px">Formula: cijena medovine + €2.40 kutija (bez PDV)</div>`;
+    }
+    if(kind==='mini'){
+      const base = exc(35);
+      return `<h4>Jarak (Mini) • cijena (bez PDV)</h4>
+      <div class="small">Paket uključuje: 4 × 0.2L staklene bočice (svaka vrsta) u premium kutiji</div>
+      <div style="margin-top:6px">Cijena: ${fmt(base)} (bez PDV)</div>
+      <div class="small" style="margin-top:6px">Formula: €${base.toFixed(2)} set (bez PDV)</div>`;
+    }
+    if(kind==='dragon'){
+      const min = exc(4*20 + 12);
+      const max = exc(4*32 + 12);
+      return `<h4>Zmaj • početna cijena (bez PDV)</h4>
+      <div class="small">Paket uključuje: 4 × 0.75L crne keramičke boce + premium drvena kutija</div>
+      <div style="margin-top:6px">Cijena: ${fmt(min)} – ${fmt(max)} (bez PDV)</div>
+      <div class="small" style="margin-top:6px">Formula: 4 × cijena medovine + €9.60 drvena kutija (bez PDV)</div>`;
+    }
+    return "";
+  }
+
+  function tipHTMLMead(kind){
+    const base = {
+      traditional: { name:"Tradicionalna 0.75L", style:"Poluslatka", abv:"14% vol. alkohola",
+        desc:"Ova boca ističe prirodnu slatkoću i arome meda te predstavlja najstariji i najjednostavniji oblik medovine, poznat još od antičkih vremena." },
+      great: { name:"Great Mead 0.75L", style:"Super slatka", abv:"14% vol. alkohola",
+        desc:"Ova boca pripada našoj super slatkoj sorti, napravljena je od najfinijeg lokalnog bagremovog meda te nudi savršenu ravnotežu intenzivne slatkoće i delikatnih nota okusa." },
+      blacktea: { name:"Metheglin 0.75L (Crni čaj)", style:"Slatka", abv:"14% vol. alkohola",
+        desc:"Ova slatka medovina je nastala kombinacijom bagremovog meda i robusnog crnog čaja. Ima suptilnu gorčinu tanina iz crnog čaja i blage nijanse citrusa." },
+      ribiz: { name:"Melomel 0.75L (Crni ribiz)", style:"Slatka", abv:"14% vol. alkohola",
+        desc:"Naša slatka Medovina s Crnim Ribizom je spravljena od najfinijeg bagremovog meda i obogaćena sočnim crnim ribizom, ova medovina donosi savršen balans prirodne slatkoće i voćne kiselosti." }
+    }[kind];
+    const p = base || {};
+    return `<h4>${p.name}</h4><div class="small">${p.style} • ${p.abv}</div><div style="margin-top:6px">${p.desc||""}</div>`;
+  }
+
+  function tipHTMLAddon(kind){
+    if(kind==='message'){ return `<h4>Poruka u boci</h4><div class="small">Naši iskusni kaligrafi će napisati vašu poruku na starom papiru i ubaciti u bočicu.</div>`; }
+    if(kind==='baglogo'){ return `<h4>Logo na vrećici</h4><div class="small">Brendirana crna luksuzna vrećica s vašim logom.</div>`; }
+    return "";
+  }
+
+  // State
+  window.__tier = 'kula';
+  window.__mead = 'traditional';
+  window.__addons = { message:false, baglogo:false, ribbon:"ribbon_black" };
+
+  // Paketi + tooltip + hero swap
+  document.querySelectorAll('#paketiTiles .tile').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      document.querySelectorAll('#paketiTiles .tile').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const tier = t.dataset.tier;
+      window.__tier = tier;
+      heroImg.src = HERO_BY_TIER[tier] || HERO_BY_TIER.kula;
+      document.getElementById('chooseMeadKula').style.display   = tier==='kula'   ? 'block':'none';
+      document.getElementById('chooseMeadMini').style.display   = tier==='mini'   ? 'block':'none';
+      document.getElementById('chooseMeadDragon').style.display = tier==='dragon' ? 'block':'none';
+      recalc();
+    });
+    t.addEventListener('mouseenter', (e)=>showTip(e, tipHTML(t.dataset.tip)));
+    t.addEventListener('mousemove', moveTip);
+    t.addEventListener('mouseleave', hideTip);
+  });
+
+  // Medovine + tooltip
+  function bindMeadTile(tile){
+    tile.addEventListener('click', ()=>{
+      document.querySelectorAll('#meadTiles .tile').forEach(x=>x.classList.remove('active'));
+      tile.classList.add('active');
+      window.__mead = tile.dataset.mead;
+      recalc();
+    });
+    tile.addEventListener('mouseenter', (e)=>{
+      const kind = tile.dataset.tipMead || tile.dataset.mead;
+      showTip(e, tipHTMLMead(kind));
+    });
+    tile.addEventListener('mousemove', moveTip);
+    tile.addEventListener('mouseleave', hideTip);
+  }
+  document.querySelectorAll('#meadTiles .tile').forEach(bindMeadTile);
+
+  // Dodaci + tooltip; vrpce kao radio
+  function selectRibbon(which){
+    window.__addons.ribbon = which;
+    document.querySelectorAll('#addons .tile[data-add^="ribbon_"]').forEach(t=>t.classList.remove('active'));
+    document.querySelector(`#addons .tile[data-add="${which}"]`).classList.add('active');
+  }
+  document.querySelectorAll('#addons .tile').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      const key = t.dataset.add;
+      if(key.startsWith('ribbon_')){ selectRibbon(key); recalc(); return; }
+      t.classList.toggle('active');
+      if(key==='message') window.__addons.message = t.classList.contains('active');
+      if(key==='baglogo') window.__addons.baglogo = t.classList.contains('active');
+      recalc();
+    });
+    if(t.dataset.tipAddon){
+      t.addEventListener('mouseenter', (e)=>showTip(e, tipHTMLAddon(t.dataset.tipAddon)));
+      t.addEventListener('mousemove', moveTip);
+      t.addEventListener('mouseleave', hideTip);
+    }
+  });
+
+  // Poruka
+  const preset = document.getElementById('messagePreset');
+  const customMsg = document.getElementById('customMsg');
+  preset.addEventListener('change', ()=>{
+    customMsg.style.display = preset.value==='custom' ? 'block' : 'none';
+    recalc();
+  });
+  customMsg.addEventListener('input', recalc);
+
+  // Buttons
+  document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+  document.getElementById('copyBtn').addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(document.getElementById('summary').textContent); }catch(e){ alert('Kopiranje nije uspjelo. Označite tekst i kopirajte ručno.'); }
+  });
+  document.getElementById('sendBtn').addEventListener('click', ()=>{
+    navigator.clipboard.writeText('info@piratesheep.store');
+    alert('Email adresa kopirana: info@piratesheep.store');
+  });
+
+  // Bottom gallery -> lightbox
+  document.querySelectorAll('.thumb img').forEach(img=>{
+    img.addEventListener('click', ()=> openLB(img.src));
+  });
+
+  function unitPrice(){
+    const tier = window.__tier;
+    const addons = window.__addons;
+    const mead = window.__mead;
+    let base=0;
+
+    if(tier==='kula'){
+      base = MEADS[mead] + 3;
+      if(addons.message) base += 6;
+      if(addons.baglogo) base += 3;
+    } else if(tier==='mini'){
+      base = 35;
+      if(addons.message) base += 6;
+      if(addons.baglogo) base += 3;
+    } else if(tier==='dragon'){
+      const val = id=>MEADS[document.getElementById(id).value];
+      base = val('d1') + val('d2') + val('d3') + val('d4') + 12;
+      if(addons.message) base += 6; // poruka nije uključena automatski
+      // baglogo uključen bez naplate
+    }
+    return base;
+  }
+
+  function recalc(){
+    // Lijeve cijene bez PDV
+    const exc_ = v => v/(1+VAT);
+    document.getElementById('price_traditional').textContent = `€${exc_(MEADS.traditional).toFixed(2)} (bez PDV)`;
+    document.getElementById('price_great').textContent       = `€${exc_(MEADS.great).toFixed(2)} (bez PDV)`;
+    document.getElementById('price_blacktea').textContent    = `€${exc_(MEADS.blacktea).toFixed(2)} (bez PDV)`;
+    document.getElementById('price_ribiz').textContent       = `€${exc_(MEADS.ribiz).toFixed(2)} (bez PDV)`;
+    const priceMini = document.getElementById('price_mini'); if(priceMini) priceMini.textContent = `€${exc_(35).toFixed(2)} (bez PDV)`;
+    document.getElementById('note_kula').textContent         = `Kula cijena = cijena medovine bez PDV + €${exc_(3).toFixed(2)} kutija (bez PDV).`;
+    document.getElementById('note_dragon').textContent       = `Odaberite 4 boce (0.75L). Drvena kutija €${exc_(12).toFixed(2)} (bez PDV) uključena.`;
+
+    // Izračuni
+    const q = Math.max(1, parseInt(document.getElementById('qty').value || "1",10));
+    const unit = unitPrice();          // s PDV
+    const rate = (q>=250?0.20:q>=100?0.10:q>=50?0.05:0);
+    const subtotal = unit*q;           // s PDV
+    const savings = subtotal*rate;     // u eurima s PDV
+    const totalInc = subtotal - savings;
+    const totalExc = totalInc/(1+VAT);
+
+    const fmt_ = n => CURRENCY + n.toFixed(2);
+    document.getElementById('grand').textContent = fmt_(totalInc);
+    document.getElementById('perBoxInc').textContent = fmt_(totalInc/q);
+    document.getElementById('perBoxExc').textContent = fmt_(totalExc/q);
+    document.getElementById('disc').textContent = fmt_(savings);
+    document.getElementById('boxes').textContent = q.toString();
+    document.getElementById('totalInc').textContent = fmt_(totalInc);
+    document.getElementById('totalExc').textContent = fmt_(totalExc);
+
+    // Boje feedbacka
+    const qtyBox = document.getElementById('qtyBox');
+    const discBox = document.getElementById('discBox');
+    qtyBox.classList.remove('bad','mid','good'); discBox.classList.remove('bad','mid','good');
+    const inputQty = document.getElementById('qty');
+    inputQty.style.borderColor = '#27272f';
+    if(rate>=0.20){ qtyBox.classList.add('good'); discBox.classList.add('good'); inputQty.style.borderColor='var(--ok)'; }
+    else if(rate>=0.10){ qtyBox.classList.add('mid'); discBox.classList.add('mid'); inputQty.style.borderColor='var(--mid)'; }
+    else if(rate>=0.05){ qtyBox.classList.add('bad'); discBox.classList.add('bad'); inputQty.style.borderColor='var(--hi)'; }
+
+    // Sažetak
+    const tier = window.__tier;
+    const addons = window.__addons;
+    let lines = [];
+    lines.push("Paket: " + (tier==='kula'?'Kula':tier==='mini'?'Jarak':'Zmaj'));
+    if(tier==='kula'){ lines.push("Medovina: " + window.__mead); }
+    if(tier==='dragon'){
+      lines.push("Medovine: "
+        + document.querySelector('#d1 option:checked').textContent + ", "
+        + document.querySelector('#d2 option:checked').textContent + ", "
+        + document.querySelector('#d3 option:checked').textContent + ", "
+        + document.querySelector('#d4 option:checked').textContent);
+    }
+    const addList = [];
+    addList.push(addons.ribbon==='ribbon_black' ? "Crna vrpca" : "Bijela vrpca");
+    if(addons.message) addList.push("Poruka u boci");
+    if(addons.baglogo) addList.push("Logo na vrećici" + (tier==='dragon'?' (uključeno)':''));
+    lines.push("Dodaci: " + addList.join(", "));
+    if(addons.message){
+      const preset = document.getElementById('messagePreset');
+      const val = preset.value==='custom' ? (document.getElementById('customMsg').value||"(vlastiti tekst)") : preset.value;
+      lines.push("Tekst poruke: " + val);
+    }
+    lines.push("Količina: " + q);
+    lines.push("Jedinična cijena s PDV: " + fmt_(unit));
+    lines.push("Ušteda: " + fmt_(savings));
+    lines.push("Ukupno bez PDV: " + fmt_(totalExc));
+    lines.push("Ukupno s PDV: " + fmt_(totalInc));
+    document.getElementById('summary').textContent = lines.join("\n");
+  }
+
+  document.getElementById('qty').addEventListener('input', recalc);
+  document.getElementById('year').textContent = new Date().getFullYear();
+  recalc();
+</script>
+</body>
+</html>
