@@ -92,6 +92,10 @@
     },
     {
       "img": "https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/koprivnica-renaissance-fair-2026/images/koprivnica-renaissance-fair-2026_031.jpeg"
+    },
+    {
+      "img": "https://raw.githubusercontent.com/piratesheephoneyventure/pirate-sheep-assets/main/koprivnica-renaissance-fair-2026/images/koprivnica-renaissance-fair-2026_winner.jpeg",
+      "winner": true
     }
   ]
 }
