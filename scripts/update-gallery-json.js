@@ -35,8 +35,11 @@ for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
       return numDiff !== 0 ? numDiff : baseA.localeCompare(baseB)
     })
 
-  const urlFor = (f) =>
-    `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${folder}/images/${encodeURIComponent(f)}`
+  const urlFor = (f) => {
+    const hasThumb = fs.existsSync(path.join(root, folder, 'thumbnails', f))
+    const dir = hasThumb ? 'thumbnails' : 'images'
+    return `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${folder}/${dir}/${encodeURIComponent(f)}`
+  }
 
   let data = { images: [] }
   const raw = fs.readFileSync(jsonPath, 'utf8').trim()
